@@ -25,7 +25,7 @@ class MatchManagerTest {
     void testOneGamePlaying() {
         manager.startGame("Mexico","Canada");
 
-        assertEquals("Mexico - Canada: 0 – 0",manager.summaryOfMatchesByTotalScore());
+        assertEquals("Mexico 0 - Canada 0",manager.summaryOfMatchesByTotalScore());
 
     }
 
@@ -43,7 +43,7 @@ class MatchManagerTest {
         manager.updateScore("Mexico - Canada: 0 – 5");
         manager.finishGame("Mexico","Canada");
 
-        assertEquals("Mexico 0 - Canada 5",manager.summaryOfMatchesByTotalScore());
+        assertEquals("",manager.summaryOfMatchesByTotalScore());
     }
 
 
