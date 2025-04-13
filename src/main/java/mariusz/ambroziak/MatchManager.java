@@ -12,11 +12,11 @@ public class MatchManager {
         //TODO
     }
 
-    public void updateScore(int homeTeamScore,int awayTeamScore){
+    public void updateScore(String update) {
         //TODO
     }
 
-    public List<String> summaryOfMatchesByTotalScore(){
+    public String summaryOfMatchesByTotalScore(){
         //TODO
         return null;
     }
