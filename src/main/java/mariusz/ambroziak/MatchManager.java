@@ -13,17 +13,27 @@ public class MatchManager {
 
     public void startGame(String homeTeam,String awayTeam){
         Match current=new Match(homeTeam,awayTeam);
+
+        if(currentMatches.containsKey(current))
+            throw new IllegalStateException("Game already started!");
+
         currentMatches.put(current,new MatchResult(0,0));
     }
 
     public void finishGame(String homeTeam,String awayTeam){
         Match match=new Match(homeTeam,awayTeam);
+        if(!currentMatches.containsKey(match))
+            throw new IllegalStateException("Game not started!");
         currentMatches.remove(match);
     }
 
     public void updateScore(String update) {
         String[] updateSplit=update.split(TEAMS_AND_SCORE_SPLITER_IN_UPDATE);
         Match teams = parseTeamsPart(updateSplit[0]);
+
+        if(!currentMatches.containsKey(teams))
+            throw new IllegalStateException("Game not started!");
+
         MatchResult updatedResult = parseScorePart(updateSplit[1]);
         currentMatches.put(teams,updatedResult);
 
@@ -43,12 +53,14 @@ public class MatchManager {
     }
 
     public String summaryOfMatchesByTotalScore(){
+        StringBuilder results=new StringBuilder();
         for(Map.Entry<Match,MatchResult> entry:currentMatches.entrySet()){
             Match match=entry.getKey();
             MatchResult result=entry.getValue();
-            return summaryOfOneMatch(match, result);
+            results.append(summaryOfOneMatch(match, result));
+            results.append("\n");
         }
-        return "";
+        return results.toString().trim();
     }
 
     private static String summaryOfOneMatch(Match match, MatchResult result) {
