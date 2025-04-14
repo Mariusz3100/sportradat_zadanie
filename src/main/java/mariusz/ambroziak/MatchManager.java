@@ -15,16 +15,24 @@ public class MatchManager {
         Match current=new Match(homeTeam,awayTeam);
 
         if(currentMatches.containsKey(current))
-            throw new IllegalStateException("Game already started!");
+            throw createGameAlreadyStartedException();
 
         currentMatches.put(current,new MatchResult(0,0));
+    }
+
+    private static IllegalStateException createGameAlreadyStartedException() {
+        return new IllegalStateException("Game already started!");
     }
 
     public void finishGame(String homeTeam,String awayTeam){
         Match match=new Match(homeTeam,awayTeam);
         if(!currentMatches.containsKey(match))
-            throw new IllegalStateException("Game not started!");
+            throw createGameNotStartedException();
         currentMatches.remove(match);
+    }
+
+    private static IllegalStateException createGameNotStartedException() {
+        return new IllegalStateException("Game not started!");
     }
 
     public void updateScore(String update) {
@@ -32,7 +40,7 @@ public class MatchManager {
         Match teams = parseTeamsPart(updateSplit[0]);
 
         if(!currentMatches.containsKey(teams))
-            throw new IllegalStateException("Game not started!");
+            throw createGameNotStartedException();
 
         MatchResult updatedResult = parseScorePart(updateSplit[1]);
         currentMatches.put(teams,updatedResult);
@@ -40,9 +48,8 @@ public class MatchManager {
     }
 
     private static Match parseTeamsPart(String updateSplit) {
-        String[] teamsSplit= updateSplit.split(TEAMS_SPLITTER_IN_UPDATE);
-        Match teams=new Match(teamsSplit[0].trim(),teamsSplit[1].trim());
-        return teams;
+        String[] teamsSplit=updateSplit.split(TEAMS_SPLITTER_IN_UPDATE);
+        return new Match(teamsSplit[0].trim(),teamsSplit[1].trim());
     }
 
     private static MatchResult parseScorePart(String scorePart) {
