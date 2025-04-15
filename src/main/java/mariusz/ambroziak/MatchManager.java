@@ -1,12 +1,14 @@
 package mariusz.ambroziak;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class MatchManager {
     public static final String TEAMS_AND_SCORE_SPLITER_IN_UPDATE = ":";
-    public static final String TEAMS_SPLITTER_IN_UPDATE = "-";
-    public static final String SCORES_SPLITTER_IN_UPDATE = "–";
+    public static final String TEAMS_SPLITTER_IN_UPDATE = "[–|-]";
+    public static final String SCORES_SPLITTER_IN_UPDATE = "[–|-]";
     public static final String FORMAT_OF_MATCH_FOR_SUMMARY = "%s %d - %s %d";
+    public static final String PATTERN_OF_UPDATE = "[\\w ]+ [–|-] [\\w ]+: \\d+ [–|-] \\d+";
 
     private static int matchesCounter=0;
 
@@ -14,6 +16,10 @@ public class MatchManager {
     Map<Match,Integer> matchesCreationOrder=new HashMap<>();
 
     public void  startGame(String homeTeam,String awayTeam){
+        if(homeTeam==null||awayTeam==null
+                ||homeTeam.isBlank()||awayTeam.isBlank())
+            throw new IllegalArgumentException("Team names must not be null or empty");
+
         Match current=new Match(homeTeam,awayTeam);
 
         if(currentMatches.containsKey(current)) {
@@ -49,14 +55,18 @@ public class MatchManager {
     }
 
     public void updateScore(String update) {
-        String[] updateSplit=update.split(TEAMS_AND_SCORE_SPLITER_IN_UPDATE);
-        Match teams = parseTeamsPart(updateSplit[0]);
+        if(!Pattern.matches(PATTERN_OF_UPDATE,update)){
+            throw new IllegalArgumentException("Update argument is in incorrect format.");
+        }else {
+            String[] updateSplit = update.split(TEAMS_AND_SCORE_SPLITER_IN_UPDATE);
+            Match teams = parseTeamsPart(updateSplit[0]);
 
-        if(!currentMatches.containsKey(teams))
-            throw createGameNotStartedException();
+            if (!currentMatches.containsKey(teams))
+                throw createGameNotStartedException();
 
-        MatchResult updatedResult = parseScorePart(updateSplit[1]);
-        currentMatches.put(teams,updatedResult);
+            MatchResult updatedResult = parseScorePart(updateSplit[1]);
+            currentMatches.put(teams, updatedResult);
+        }
 
     }
 
