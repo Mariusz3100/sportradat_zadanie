@@ -1,7 +1,6 @@
 package mariusz.ambroziak;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class MatchManager {
     public static final String TEAMS_AND_SCORE_SPLITER_IN_UPDATE = ":";
@@ -9,15 +8,22 @@ public class MatchManager {
     public static final String SCORES_SPLITTER_IN_UPDATE = "–";
     public static final String FORMAT_OF_MATCH_FOR_SUMMARY = "%s %d - %s %d";
 
-    Map<Match,MatchResult> currentMatches=new HashMap<>();
+    private static int matchesCounter=0;
 
-    public void startGame(String homeTeam,String awayTeam){
+    Map<Match,MatchResult> currentMatches=new HashMap<>();
+    Map<Match,Integer> matchesCreationOrder=new HashMap<>();
+
+    public void  startGame(String homeTeam,String awayTeam){
         Match current=new Match(homeTeam,awayTeam);
 
-        if(currentMatches.containsKey(current))
+        if(currentMatches.containsKey(current)) {
             throw createGameAlreadyStartedException();
+        }else{
+            currentMatches.put(current,new MatchResult(0,0));
+            matchesCreationOrder.put(current,matchesCounter++);
+        }
 
-        currentMatches.put(current,new MatchResult(0,0));
+
     }
 
     private static IllegalStateException createGameAlreadyStartedException() {
@@ -29,6 +35,7 @@ public class MatchManager {
         if(!currentMatches.containsKey(match))
             throw createGameNotStartedException();
         currentMatches.remove(match);
+        matchesCreationOrder.remove(match);
     }
 
     private static IllegalStateException createGameNotStartedException() {
@@ -60,15 +67,45 @@ public class MatchManager {
     }
 
     public String summaryOfMatchesByTotalScore(){
-        StringBuilder results=new StringBuilder();
-        for(Map.Entry<Match,MatchResult> entry:currentMatches.entrySet()){
+        Map<Integer,Map<Integer,String>> results=new TreeMap(Comparator.reverseOrder());
+
+
+        Set<Map.Entry<Match, Integer>> keySet = matchesCreationOrder.entrySet();
+
+        for(Map.Entry<Match, Integer> entry: keySet){
             Match match=entry.getKey();
-            MatchResult result=entry.getValue();
-            results.append(summaryOfOneMatch(match, result));
-            results.append("\n");
+            MatchResult result=currentMatches.get(match);
+
+            if(!results.containsKey(result.homeTeamScore()+result.awayTeamScore())) {
+                TreeMap<Integer, String> newTotalScoreEntry = new TreeMap<>(Comparator.reverseOrder());
+                newTotalScoreEntry.put(entry.getValue(), summaryOfOneMatch(match, result));
+//                newTotalScoreEntry.put(result.homeTeamScore()+result.awayTeamScore(), summaryOfOneMatch(match, result));
+                results.put(result.homeTeamScore()+result.awayTeamScore(), newTotalScoreEntry);
+            }else{
+
+                results.get(result.homeTeamScore()+result.awayTeamScore())
+                        .put(entry.getValue(), summaryOfOneMatch(match, result));
+            }
+
+
         }
-        return results.toString().trim();
+        String retValue="";
+        for(Map.Entry<Integer,Map<Integer,String>> entry:results.entrySet()){
+            retValue+=String.join("\n",entry.getValue().values())+"\n";
+        }
+
+            return retValue.trim();
     }
+
+//    public String summaryOfMatchesByTotalScore(){
+//        Map<Integer,String> results=new TreeMap<>();
+//        for(Map.Entry<Match, Integer> entry:matchesCreationOrder.entrySet()){
+//            Match match=entry.getKey();
+//            MatchResult result=currentMatches.get(match);
+//            results.put(entry.getValue(),summaryOfOneMatch(match, result));
+//        }
+//        return String.join("\n",results.values());
+//    }
 
     private static String summaryOfOneMatch(Match match, MatchResult result) {
         return String.format(FORMAT_OF_MATCH_FOR_SUMMARY,
