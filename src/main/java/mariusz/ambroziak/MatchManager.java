@@ -32,10 +32,16 @@ public class MatchManager {
 
     public void finishGame(String homeTeam,String awayTeam){
         Match match=new Match(homeTeam,awayTeam);
+
         if(!currentMatches.containsKey(match))
             throw createGameNotStartedException();
+
         currentMatches.remove(match);
-        matchesCreationOrder.remove(match);
+
+        //I do not see any possibility to have match in currentMatches and not in matchesCreationOrder
+        //This check is to avoid unnecessary exceptions in the future.
+        if(matchesCreationOrder.containsKey(match))
+            matchesCreationOrder.remove(match);
     }
 
     private static IllegalStateException createGameNotStartedException() {
@@ -67,45 +73,48 @@ public class MatchManager {
     }
 
     public String summaryOfMatchesByTotalScore(){
-        Map<Integer,Map<Integer,String>> results=new TreeMap(Comparator.reverseOrder());
+        Map<Integer, Map<Integer, String>> totalScoreToOrderedMatches = parseFieldMapsToSummariesOrdereByTotalScoreAndCreation();
 
-
-        Set<Map.Entry<Match, Integer>> keySet = matchesCreationOrder.entrySet();
-
-        for(Map.Entry<Match, Integer> entry: keySet){
-            Match match=entry.getKey();
-            MatchResult result=currentMatches.get(match);
-
-            if(!results.containsKey(result.homeTeamScore()+result.awayTeamScore())) {
-                TreeMap<Integer, String> newTotalScoreEntry = new TreeMap<>(Comparator.reverseOrder());
-                newTotalScoreEntry.put(entry.getValue(), summaryOfOneMatch(match, result));
-//                newTotalScoreEntry.put(result.homeTeamScore()+result.awayTeamScore(), summaryOfOneMatch(match, result));
-                results.put(result.homeTeamScore()+result.awayTeamScore(), newTotalScoreEntry);
-            }else{
-
-                results.get(result.homeTeamScore()+result.awayTeamScore())
-                        .put(entry.getValue(), summaryOfOneMatch(match, result));
-            }
-
-
-        }
-        String retValue="";
-        for(Map.Entry<Integer,Map<Integer,String>> entry:results.entrySet()){
-            retValue+=String.join("\n",entry.getValue().values())+"\n";
-        }
-
-            return retValue.trim();
+        return concatenateSummaries(totalScoreToOrderedMatches);
     }
 
-//    public String summaryOfMatchesByTotalScore(){
-//        Map<Integer,String> results=new TreeMap<>();
-//        for(Map.Entry<Match, Integer> entry:matchesCreationOrder.entrySet()){
-//            Match match=entry.getKey();
-//            MatchResult result=currentMatches.get(match);
-//            results.put(entry.getValue(),summaryOfOneMatch(match, result));
-//        }
-//        return String.join("\n",results.values());
-//    }
+    private static String concatenateSummaries(Map<Integer, Map<Integer, String>> totalScoreToOrderedMatches) {
+        StringBuilder retValue= new StringBuilder();
+        for(Map.Entry<Integer,Map<Integer,String>> entry: totalScoreToOrderedMatches.entrySet()){
+            retValue.append(String.join("\n", entry.getValue().values())).append("\n");
+        }
+        return retValue.toString().trim();
+    }
+
+    private Map<Integer, Map<Integer, String>> parseFieldMapsToSummariesOrdereByTotalScoreAndCreation() {
+        Map<Integer,Map<Integer,String>> totalScoreToOrderedMatches=new TreeMap(Comparator.reverseOrder());
+
+        for(Map.Entry<Match, Integer> creationOrderEntry: matchesCreationOrder.entrySet()){
+            Match match=creationOrderEntry.getKey();
+            MatchResult result=currentMatches.get(match);
+
+            if(!totalScoreToOrderedMatches.containsKey(calculateTotalScore(result))) {
+                TreeMap<Integer, String> newTotalScoreEntry = createNewTotalScoreEntry(creationOrderEntry, match, result);
+                totalScoreToOrderedMatches.put(calculateTotalScore(result), newTotalScoreEntry);
+            }else{
+                Map<Integer, String> existingTotalScoreEntry = totalScoreToOrderedMatches.get(calculateTotalScore(result));
+                existingTotalScoreEntry.put(creationOrderEntry.getValue(), summaryOfOneMatch(match, result));
+            }
+        }
+        return totalScoreToOrderedMatches;
+    }
+
+    private static int calculateTotalScore(MatchResult result) {
+        return result.homeTeamScore() + result.awayTeamScore();
+    }
+
+    private static TreeMap<Integer, String> createNewTotalScoreEntry(Map.Entry<Match, Integer> creationOrderEntry, Match match, MatchResult result) {
+        TreeMap<Integer, String> newTotalScoreEntry = new TreeMap<>(Comparator.reverseOrder());
+        newTotalScoreEntry.put(creationOrderEntry.getValue(), summaryOfOneMatch(match, result));
+        return newTotalScoreEntry;
+    }
+
+
 
     private static String summaryOfOneMatch(Match match, MatchResult result) {
         return String.format(FORMAT_OF_MATCH_FOR_SUMMARY,
