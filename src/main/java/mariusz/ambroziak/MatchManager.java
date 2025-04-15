@@ -44,10 +44,7 @@ public class MatchManager {
 
         currentMatches.remove(match);
 
-        //I do not see any possibility to have match in currentMatches and not in matchesCreationOrder
-        //This check is to avoid unnecessary exceptions in the future.
-        if(matchesCreationOrder.containsKey(match))
-            matchesCreationOrder.remove(match);
+        matchesCreationOrder.remove(match);
     }
 
     private static IllegalStateException createGameNotStartedException() {
@@ -58,16 +55,20 @@ public class MatchManager {
         if(!Pattern.matches(PATTERN_OF_UPDATE,update)){
             throw new IllegalArgumentException("Update argument is in incorrect format.");
         }else {
-            String[] updateSplit = update.split(TEAMS_AND_SCORE_SPLITER_IN_UPDATE);
-            Match teams = parseTeamsPart(updateSplit[0]);
-
-            if (!currentMatches.containsKey(teams))
-                throw createGameNotStartedException();
-
-            MatchResult updatedResult = parseScorePart(updateSplit[1]);
-            currentMatches.put(teams, updatedResult);
+            parseProperlyFormattedUpdateString(update);
         }
 
+    }
+
+    private void parseProperlyFormattedUpdateString(String update) {
+        String[] updateSplit = update.split(TEAMS_AND_SCORE_SPLITER_IN_UPDATE);
+        Match teams = parseTeamsPart(updateSplit[0]);
+
+        if (!currentMatches.containsKey(teams))
+            throw createGameNotStartedException();
+
+        MatchResult updatedResult = parseScorePart(updateSplit[1]);
+        currentMatches.put(teams, updatedResult);
     }
 
     private static Match parseTeamsPart(String updateSplit) {
@@ -97,7 +98,7 @@ public class MatchManager {
     }
 
     private Map<Integer, Map<Integer, String>> parseFieldMapsToSummariesOrdereByTotalScoreAndCreation() {
-        Map<Integer,Map<Integer,String>> totalScoreToOrderedMatches=new TreeMap(Comparator.reverseOrder());
+        Map<Integer,Map<Integer,String>> totalScoreToOrderedMatches=new TreeMap<>(Comparator.reverseOrder());
 
         for(Map.Entry<Match, Integer> creationOrderEntry: matchesCreationOrder.entrySet()){
             Match match=creationOrderEntry.getKey();
