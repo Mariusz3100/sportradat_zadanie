@@ -42,12 +42,33 @@ class MatchManagerTest {
     }
 
 
+
+    @Test
+    void testTwoTeamsPlayingTwoGamesDifferentPositions() {
+        manager.startGame("Mexico","Canada");
+        manager.startGame("Canada","Mexico");
+
+        String expectedResult = """
+                    Canada 0 - Mexico 0
+                    Mexico 0 - Canada 0""";
+        assertEquals(expectedResult,manager.summaryOfMatchesByTotalScore());
+
+    }
+
+
     @org.junit.jupiter.api.Test
     void updateScore() {
         manager.startGame("Mexico","Canada");
         manager.updateScore("Mexico - Canada: 0 – 5");
 
         assertEquals("Mexico 0 - Canada 5",manager.summaryOfMatchesByTotalScore());
+    }
+
+    @org.junit.jupiter.api.Test
+    void updateScoreInputIsOdd() {
+        manager.startGame("Mexico","Canada");
+
+        assertThrows(IllegalArgumentException.class,()->manager.updateScore(" \n: 0 – 5"));
     }
 
 
@@ -70,6 +91,16 @@ class MatchManagerTest {
     @org.junit.jupiter.api.Test
     void finishNotExistinghGame() {
         assertThrows(IllegalStateException.class,()->manager.finishGame("Mexico","Canada"));
+    }
+
+    @org.junit.jupiter.api.Test
+    void finishNotExistinghGameWithNullNames() {
+        assertThrows(IllegalStateException.class,()->manager.finishGame(null,null));
+    }
+
+    @org.junit.jupiter.api.Test
+    void finishNotExistinghGameWithBlankNames() {
+        assertThrows(IllegalStateException.class,()->manager.finishGame("\n",""));
     }
 
     @org.junit.jupiter.api.Test
@@ -123,11 +154,21 @@ class MatchManagerTest {
         assertEquals("",manager.summaryOfMatchesByTotalScore());
     }
 
+    @org.junit.jupiter.api.Test
+    void startGameWithEmptyNames() {
+        assertThrows(IllegalArgumentException.class,()->manager.startGame("",""));
+    }
+
+    @org.junit.jupiter.api.Test
+    void startGameWithNullNames() {
+        assertThrows(IllegalArgumentException.class,()->manager.startGame(null,null));
+    }
+
 
     @org.junit.jupiter.api.Test
     void startScoreAndUpdateManyGames() {
         manager.startGame("Mexico","Canada");
-        manager.updateScore("Mexico - Canada: 0 – 5");
+        manager.updateScore("Mexico - Canada: 0 - 5");
         manager.startGame("Spain","Brazil");
         manager.updateScore("Spain - Brazil: 1 – 0");
         manager.updateScore("Spain - Brazil: 2 – 0");
