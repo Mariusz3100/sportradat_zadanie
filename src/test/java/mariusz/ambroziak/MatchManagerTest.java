@@ -127,6 +127,18 @@ class MatchManagerTest {
     }
 
     @org.junit.jupiter.api.Test
+    void startTwoGamesSameNames() {
+        manager.startGame("Germany","Germany");
+
+        manager.updateScore("Germany - Germany: 6 – 2");
+
+
+        String expectedResult = """
+                    Germany 6 - Germany 2""";
+        assertEquals(expectedResult,manager.summaryOfMatchesByTotalScore());
+    }
+
+    @org.junit.jupiter.api.Test
     void startAndFinishGame() {
         manager.startGame("Mexico","Canada");
         manager.finishGame("Mexico","Canada");
